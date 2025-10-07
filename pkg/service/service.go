@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/squee1945/pillar-service/pkg/logger"
 	"github.com/squee1945/pillar-service/pkg/secrets"
@@ -10,16 +11,27 @@ import (
 
 type Config struct {
 	Log logger.L
+
+	AppID int64
+
+	Secrets                 *secrets.S
+	WebhookSecretName       string
+	AppPrivateKeySecretName string
+
+	TokenExchangeTimeout time.Duration
+
+	// Optional
+	Transport http.RoundTripper
 }
 
 type Service struct {
 	Config
-
-	Secrets           *secrets.S
-	WebhookSecretName string
 }
 
 func New(ctx context.Context, cfg Config) (*Service, error) {
+	if cfg.Transport == nil {
+		cfg.Transport = http.DefaultTransport
+	}
 	return &Service{Config: cfg}, nil
 }
 
