@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/sethvargo/go-envconfig"
 	"github.com/squee1945/pillar-service/pkg/logger"
+	"github.com/squee1945/pillar-service/pkg/secrets"
 	"github.com/squee1945/pillar-service/pkg/service"
 )
 
@@ -16,12 +18,12 @@ type config struct {
 	// RunnerImage             string `env:"RUNNER_IMAGE,required"`
 	// PromptBucket            string `env:"PROMPT_BUCKET,required"`
 	// GitHubAppID             int64  `env:"GITHUB_APP_ID,required"`
-	// GitHubWebhookSecretFile string `env:"GITHUB_WEBHOOK_SECRET_FILE,required"`
+	GitHubWebhookSecretName string `env:"GITHUB_WEBHOOK_SECRET_NAME,required"`
 	// GitHubPrivateKeyFile    string `env:"GITHUB_PRIVATE_KEY_FILE,required"`
 	// GeminiApiKeyFile        string `env:"GEMINI_API_KEY_FILE,required"`
 
-	Port string `env:"PORT,default=8080"`
-	// SecretCacheTTL         time.Duration `env:"SECRET_CACHE_TTL,default=1m"`
+	Port           string        `env:"PORT,default=8080"`
+	SecretCacheTTL time.Duration `env:"SECRET_CACHE_TTL,default=1m"`
 	// RunnerTimeout          time.Duration `env:"RUNNER_TIMEOUT,default=180s"`
 	// TokenExchangeTimeout   time.Duration `env:"TOKEN_EXCHANGE_TIMEOUT,default=30s"`
 	// RepoPermissionTimeout  time.Duration `env:"REPO_PERMISSION_TIMEOUT,default=30s"`
@@ -39,8 +41,16 @@ func main() {
 		fail(ctx, log, "processing environment variables: %v", err)
 	}
 
+	secretAccessor, err := secrets.New(ctx, SecretCacheTTL)
+	if err != nil {
+		fail(ctx, log, "creating secret accessor: %v", err)
+	}
+	defer secretAccessor.Close()
+
 	serverConfig := service.Config{
-		Log: log,
+		Log:               log,
+		Secrets:           secretAccessor,
+		WebhookSecretName: c.GitHubWebhookSecretName,
 	}
 
 	server, err := service.New(ctx, serverConfig)
