@@ -6,8 +6,21 @@ import (
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v75/github"
 )
+
+func (s *Service) githubClient(ctx context.Context, installationID int64) (*github.Client, error) {
+	privateKey, err := s.Secrets.Read(ctx, s.AppPrivateKeySecretName)
+	if err != nil {
+		return nil, fmt.Errorf("reading private key: %v", err)
+	}
+
+	tr, err := ghinstallation.New(s.Transport, s.AppID, installationID, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("creating transport: %v", err)
+	}
+	return github.NewClient(&http.Client{Transport: tr}), nil
+}
 
 func (s *Service) installationToken(ctx context.Context, installationID int64, opts ...installationTokenOpts) (string, error) {
 	privateKey, err := s.Secrets.Read(ctx, s.AppPrivateKeySecretName)

@@ -2,11 +2,16 @@ package service
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/squee1945/pillar-service/pkg/logger"
 	"github.com/squee1945/pillar-service/pkg/secrets"
+)
+
+const (
+	defaultServiceTag = "pillar"
 )
 
 type Config struct {
@@ -21,7 +26,8 @@ type Config struct {
 	TokenExchangeTimeout time.Duration
 
 	// Optional
-	Transport http.RoundTripper
+	Transport  http.RoundTripper
+	ServiceTag string
 }
 
 type Service struct {
@@ -31,6 +37,9 @@ type Service struct {
 func New(ctx context.Context, cfg Config) (*Service, error) {
 	if cfg.Transport == nil {
 		cfg.Transport = http.DefaultTransport
+	}
+	if cfg.ServiceTag == "" {
+		cfg.ServiceTag = defaultServiceTag
 	}
 	return &Service{Config: cfg}, nil
 }
@@ -47,4 +56,19 @@ func (s *Service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Write([]byte("Hello"))
+}
+
+const consonants = "bcdfghjklmnpqrstvwxyz"
+
+func randomString(n int) string {
+	if n <= 0 {
+		return ""
+	}
+	b := make([]byte, n)
+	charsetLength := len(consonants)
+	for i := range b {
+		b[i] = consonants[rand.Intn(charsetLength)]
+	}
+	return string(b)
 }

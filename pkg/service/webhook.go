@@ -3,7 +3,7 @@ package service
 import (
 	"net/http"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v75/github"
 )
 
 func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
@@ -35,10 +35,17 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 	switch event := event.(type) {
 
 	case *github.PushEvent:
-		s.Log.Debug(ctx, "Received Push Event from repo: %s, commit URL: %s, pushed by: %s", *event.Repo.FullName, *event.HeadCommit.URL, *event.Pusher.Name)
+		s.Log.Debug(ctx, "Received push %s event (repo: %q commitURL: %s)", event.GetAction(), event.GetRepo().GetFullName(), event.GetHeadCommit().GetURL())
 
 	case *github.PullRequestEvent:
-		s.Log.Debug(ctx, "Received Pull Request Event from repo: %s, %s action on PR #%d in %s", *event.Repo.FullName, *event.Action, *event.Number, *event.Repo.FullName)
+		s.Log.Debug(ctx, "Received pullRequest %s event (repo: %q pullRequest: %d)", event.GetAction(), event.GetRepo().GetFullName(), event.GetPullRequest().GetNumber())
+
+	case *github.ReleaseEvent:
+		s.Log.Debug(ctx, "Received release %s event (repo: %q release: %q)", event.GetAction(), event.GetRepo().GetFullName(), event.GetRelease().GetName())
+		if err := s.releaseEventHandler(ctx, event); err != nil {
+			s.serverError(w, r, http.StatusInternalServerError, "release event handler: %v", err)
+			return
+		}
 
 	default:
 		s.Log.Info(ctx, "Received unhandled event type: %s", github.WebHookType(r))
