@@ -12,3 +12,10 @@ resource "google_service_account" "default" {
   account_id   = each.key
   display_name = each.value
 }
+
+resource "google_project_iam_member" "pillar_service_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.default["pillar-service"].email}"
+}
+

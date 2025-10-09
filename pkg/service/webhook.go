@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/go-github/v75/github"
@@ -31,6 +32,13 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 		s.clientError(w, r, http.StatusBadRequest, "could not parse webhook: %v", err)
 		return
 	}
+
+	eventJSON, err := json.MarshalIndent(event, "", "  ")
+	if err != nil {
+		s.serverError(w, r, http.StatusInternalServerError, "marshalling event: %v", err)
+		return
+	}
+	s.Log.Debug(ctx, "Received event:\n%s", eventJSON)
 
 	switch event := event.(type) {
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sethvargo/go-envconfig"
@@ -61,6 +62,7 @@ func main() {
 		fail(ctx, log, "creating service: %v", err)
 	}
 
+	log.Info(ctx, strings.Repeat("=", 120))
 	log.Info(ctx, "Starting server on port "+c.Port)
 	if err := http.ListenAndServe(":"+c.Port, server.Handler()); err != nil {
 		fail(ctx, log, "server failed: %v", err)

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -14,18 +15,23 @@ const (
 	maxForkAttempts = 10
 )
 
-func (s *Service) fork(ctx context.Context, owner, repo string, installation *github.Installation) (string, string, error) {
+func (s *Service) fork(ctx context.Context, installation *github.Installation, owner, repo string, forker *github.User) (string, string, error) {
+	// ijson, err := json.MarshalIndent(installation, "", "  ")
+	// if err != nil {
+	// 	return "", "", fmt.Errorf("marshalling installation: %v", err)
+	// }
+	// s.Log.Debug(ctx, "Installation:\n%s", ijson)
+
 	if installation == nil {
 		return "", "", fmt.Errorf("installation is nil")
 	}
-	account := installation.GetAccount()
-	if account == nil {
-		return "", "", fmt.Errorf("installation.Account is nil")
+	if forker == nil {
+		return "", "", fmt.Errorf("forker is nil")
 	}
 
-	newOwner := account.GetLogin()
+	newOwner := forker.GetLogin()
 	if newOwner == "" {
-		return "", "", fmt.Errorf("installation.Account.Login is empty")
+		return "", "", fmt.Errorf("forker.Login is empty")
 	}
 	newRepo := s.ServiceTag + "-" + repo + "-" + randomString(6)
 
@@ -33,7 +39,7 @@ func (s *Service) fork(ctx context.Context, owner, repo string, installation *gi
 		Name:              newRepo,
 		DefaultBranchOnly: true,
 	}
-	if account.GetType() == "Organization" {
+	if forker.GetType() == "Organization" {
 		opts.Organization = newOwner
 	}
 
@@ -48,9 +54,17 @@ func (s *Service) fork(ctx context.Context, owner, repo string, installation *gi
 			return "", "", fmt.Errorf("failed to create fork after %d attempts", attempt)
 		}
 		s.Log.Debug(ctx, "Creating fork %s/%s (attempt %d)", newOwner, newRepo, attempt)
-		_, resp, err := ghClient.Repositories.CreateFork(ctx, owner, repo, opts)
+		fork, resp, err := ghClient.Repositories.CreateFork(ctx, owner, repo, opts)
 		if err != nil {
-			return "", "", fmt.Errorf("creating fork: %v", err)
+			if _, ok := err.(*github.AcceptedError); !ok {
+				return "", "", fmt.Errorf("creating fork (status code: %d): %v", resp.StatusCode, err)
+			}
+			forkJSON, err := json.MarshalIndent(fork, "", "  ")
+			if err != nil {
+				return "", "", fmt.Errorf("marshalling fork: %v", err)
+			}
+			s.Log.Debug(ctx, "Fork accepted:\n%s", forkJSON)
+			s.Log.Debug(ctx, "Fork response headers: %s", resp.Header)
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
