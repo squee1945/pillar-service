@@ -16,6 +16,10 @@ terraform {
       source  = "ko-build/ko"
       version = "0.0.17"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11.1"
+    }
   }
 }
 

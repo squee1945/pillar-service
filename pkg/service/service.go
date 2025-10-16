@@ -2,45 +2,33 @@ package service
 
 import (
 	"context"
-	"math/rand"
 	"net/http"
 	"time"
-
-	"github.com/squee1945/pillar-service/pkg/logger"
-	"github.com/squee1945/pillar-service/pkg/secrets"
 )
 
 const (
-	defaultServiceTag = "pillar"
+	defaultTokenExchangeTimeout = 30 * time.Second
+	defaultServiceName          = "pillar"
 )
-
-type Config struct {
-	Log logger.L
-
-	AppID int64
-
-	Secrets                 *secrets.S
-	WebhookSecretName       string
-	AppPrivateKeySecretName string
-
-	TokenExchangeTimeout time.Duration
-
-	// Optional
-	Transport  http.RoundTripper
-	ServiceTag string
-}
 
 type Service struct {
 	Config
 }
 
 func New(ctx context.Context, cfg Config) (*Service, error) {
+	if err := cfg.validate(); err != nil {
+		return nil, err
+	}
 	if cfg.Transport == nil {
 		cfg.Transport = http.DefaultTransport
 	}
-	if cfg.ServiceTag == "" {
-		cfg.ServiceTag = defaultServiceTag
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = defaultServiceName
 	}
+	if cfg.TokenExchangeTimeout == 0 {
+		cfg.TokenExchangeTimeout = defaultTokenExchangeTimeout
+	}
+
 	return &Service{Config: cfg}, nil
 }
 
@@ -57,18 +45,4 @@ func (s *Service) indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("Hello"))
-}
-
-const consonants = "bcdfghjklmnpqrstvwxyz"
-
-func randomString(n int) string {
-	if n <= 0 {
-		return ""
-	}
-	b := make([]byte, n)
-	charsetLength := len(consonants)
-	for i := range b {
-		b[i] = consonants[rand.Intn(charsetLength)]
-	}
-	return string(b)
 }

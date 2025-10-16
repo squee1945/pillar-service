@@ -7,6 +7,10 @@ import (
 	"github.com/google/go-github/v75/github"
 )
 
+var (
+	dependent = repository{owner: "kmonty-catamaran", repo: "deps-weather-webapp"}
+)
+
 type repository struct {
 	owner string
 	repo  string
@@ -22,19 +26,17 @@ func (s *Service) releaseEventHandler(ctx context.Context, event *github.Release
 		return nil
 	}
 
-	// Find dependents (reverse dependencies)
-	dependent := repository{owner: "kmonty-catamaran", repo: "deps-weather-webapp"}
+	// Find dependents (reverse dependencies).
+	// TODO
 
-	// Fork them
-	newOwner, newRepo, err := s.fork(ctx, event.GetInstallation(), dependent.owner, dependent.repo, event.GetRepo().GetOwner())
+	fork, err := s.fork(ctx, event.GetInstallation().GetID(), dependent.owner, dependent.repo, event.GetRepo().GetOwner())
 	if err != nil {
 		return fmt.Errorf("forking %s/%s: %v", dependent.owner, dependent.repo, err)
 	}
 
-	s.Log.Info(ctx, "Forked %s/%s to %s/%s", dependent.owner, dependent.repo, newOwner, newRepo)
+	prompt := `
+Using the local checked out repository and the github tools, list the releases for this repository.
+`
 
-	// TODO: Launch LLM to update and test code
-	// TODO: Create pull request from fork back to dependency
-
-	return nil
+	return s.run(ctx, event.GetInstallation().GetID(), fork, prompt)
 }

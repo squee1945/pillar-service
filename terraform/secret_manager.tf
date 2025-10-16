@@ -2,7 +2,7 @@ resource "google_secret_manager_secret" "default" {
   project = var.project_id
 
   for_each = toset([
-    # "gemini-api-key",
+    "gemini-api-key",
     "github-webhook-secret",
     "github-private-key"
   ])
