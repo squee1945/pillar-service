@@ -34,9 +34,10 @@ func (s *Service) releaseEventHandler(ctx context.Context, event *github.Release
 		return fmt.Errorf("forking %s/%s: %v", dependent.owner, dependent.repo, err)
 	}
 
-	prompt := `
-Using the local checked out repository and the github tools, list the releases for this repository.
-`
+	prompt, err := s.renderPrompt(ctx, &promptReleasePublished{event: event, dependent: fmt.Sprintf("https://github.com/%s/%s", dependent.owner, dependent.repo)})
+	if err != nil {
+		return fmt.Errorf("rendering prompt: %v", err)
+	}
 
 	return s.run(ctx, event.GetInstallation().GetID(), fork, prompt)
 }

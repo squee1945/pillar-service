@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"text/template"
 	"time"
 )
 
@@ -13,6 +15,8 @@ const (
 
 type Service struct {
 	Config
+
+	prompts *template.Template
 }
 
 func New(ctx context.Context, cfg Config) (*Service, error) {
@@ -29,7 +33,12 @@ func New(ctx context.Context, cfg Config) (*Service, error) {
 		cfg.TokenExchangeTimeout = defaultTokenExchangeTimeout
 	}
 
-	return &Service{Config: cfg}, nil
+	prompts, err := parsePromptTemplates(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("parsing templates: %w", err)
+	}
+
+	return &Service{Config: cfg, prompts: prompts}, nil
 }
 
 func (s *Service) Handler() http.Handler {

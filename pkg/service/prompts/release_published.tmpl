@@ -1,0 +1,108 @@
+| Parameter | Value |
+| :------- | :------- |
+| <dependent>  | {{ .Dependent }} |
+| <package>  | {{ .Event.Repo.HTMLURL }} |
+| <version> | {{ .Event.Release.TagName }} |
+
+## Scenario
+
+Package <package> has just published a new release <version> (the full
+publish event details can be seen below in section "Event JSON").
+
+You are the maintainer of <package> and you want to update your reverse
+dependencies (i.e., your "dependents") to the new <version>.
+
+## Goal
+
+Upgrade <dependent> repository's dependency on <package> to the latest
+<version>, where <dependent> must be specified by the user. Upgrade the
+dependency, changing the code and the tests as needed. After ensuring the
+build succeeds and the tests pass, commit and push the code to the origin,
+then use the provided GitHub tools to create a pull request against the
+<dependent> repository.
+
+**IMPORTANT** You *already* have a fork of <dependent> cloned locally.
+Additionally, a clean development branch is *already* checked out.
+You can work locally on this fork to upgrade <package>.
+
+## Steps
+
+To perform this upgrade:
+
+[ ] Check the local fork of <dependent> to determine the current version of
+    <package> in use. If <dependent> is already using the latest <version> of
+    <package>, then just say that, and there is no more work to do. If the
+    <package> is not used at all, say that too, and there is no more work to do.
+
+[ ] Upgrade the <package> dependency to the desired <version> using
+    language-specific tools. For example, for Go, `go get <package>@<version>`.
+    Make sure the changes build and tests pass, changing code and tests as
+    required to get a successful build and passing tests.
+    **IMPORTANT**: Install any language toolchains required to complete your
+    upgrade.
+
+[ ] Commit and push the changes back to the fork repository.
+
+[ ] Create a draft pull request on the <dependent> repository with the `head`
+    in the form `<username>:<branch>` using the `create_pull_request` tool.
+    The `title` of the pull request should be
+    "Upgrade <dependency> to <version>".
+    **IMPORTANT**: make sure that `maintainer_can_modify=true` and
+    `draft=true` for this pull request!
+    If you get an unrecoverable error trying to create this pull request,
+    just print out a suggested pull request description and stop. See below for
+    the structure of this description.
+
+[ ] Inspect any commit status changes on the pull request to ensure that all
+    workflows succeed using the `get_pull_request_status` tool. If any
+    workflows fail, inspect the workflow run logs (using the `get_workflow_run`
+    and `get_workflow_run_logs` tools) and adjust code or tests in <temp>
+    accordingly, committing to the <branch> and pushing to <fork> which updates
+    the pull request.
+    **IMPORTANT**: Make sure that any new changes build and test before
+    committing.
+    Repeat this until the commit statuses are all passing.
+
+[ ] When the commit statuses are all passing, update the draft pull request
+    description to include the following information (to the best of your
+    ability) using the `update_pull_request` tool:
+     - The <dependency> that was upgraded, including the old version and the
+       new <version>.
+     - A link to the details of the <package>'s new <version> release.
+     - What code or test patterns were updated to make the upgrade possible.
+     - A list of workflows that were successfully executed to prove the pull
+       request works.
+    **IMPORTANT**: Clear the draft flag of the pull request while updating it.
+
+As you complete the above steps, mark them as complete and output the entire
+set of steps again so it's easier to keep track of where you are in the process.
+
+## Available tools
+
+To achieve this work, the github MCP server is installed with a set of tools,
+including the following:
+
+  - Create a pull request: `create_pull_request`
+  - Get the details of a pull request: `get_pull_request`
+  - Get the status of pull request checks: `get_pull_request_status`
+  - List the workflows: `list_workflows`
+  - Run specific workflows: `run_workflow`
+  - Get the details of a workflow run: `get_workflow_run`
+  - Get the logs of a workflow run: `get_workflow_run_logs`
+  - Update the pull request description: `update_pull_request`
+  - Remove the draft flag from the pull request: `update_pull_request`
+
+**IMPORTANT**: Do not use, or install, the GitHub CLI to achieve your goal.
+Use the tools on the provided GitHub MCP server.
+
+## Hints
+
+Be thorough in your checks on the pull request patch you are sending
+to the maintainer. Your job is to make it as easy as possible for the
+maintainer to review your changes and accept your pull request.
+
+You are performing this task alone with no human to help. Detect any errors and
+work to overcome them as you achieve your goal.
+
+## Event JSON
+{{ .EventJSON }}
