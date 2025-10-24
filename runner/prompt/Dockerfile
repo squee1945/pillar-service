@@ -5,7 +5,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY gcscp.go ./
+COPY gcscp/gcscp.go ./gcscp.go
 RUN CGO_ENABLED=0 go build -o /usr/local/bin/gcscp gcscp.go
 
 
