@@ -18,7 +18,9 @@ const (
 
 	defaultRunnerTimeout         = 10 * time.Minute
 	defaultMCPToolTimeout        = 2 * time.Minute
-	defaultGeminiMaxSessionTurns = 20
+	defaultGeminiMaxSessionTurns = 50
+
+	devHelperCommand = "devhelpermcp"
 )
 
 type R struct {
@@ -145,6 +147,12 @@ func (r *R) Run(ctx context.Context) error {
 func (r *R) prepareSettings(ctx context.Context) (string, error) {
 	settings := geminiSettings{
 		MCPServers: map[string]mcpServerSettings{
+			"devHelper": {
+				Description: "High level tools to assist in creating contributions to GitHub repositories",
+				Command:     devHelperCommand,
+				Args:        []string{"--github_token=" + r.GitHubToken},
+				Timeout:     r.MCPToolTimeout.Milliseconds(),
+			},
 			"github": {
 				Description: "Tools to interact with GitHub repositories",
 				HTTPURL:     "https://api.githubcopilot.com/mcp/",
