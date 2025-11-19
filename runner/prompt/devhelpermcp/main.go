@@ -29,7 +29,8 @@ func main() {
 	opts := &mcp.ServerOptions{HasTools: true}
 	server := mcp.NewServer(i, opts)
 
-	mcp.AddTool(server, &mcp.Tool{Name: "greet", Description: "say hi"}, greet(*githubToken))
+	mcp.AddTool(server, &mcp.Tool{Name: "greet", Description: "say hi"}, greeterTool(*githubToken))
+	mcp.AddTool(server, &mcp.Tool{Name: "prep_dev_env", Description: "Prepares a dev environment to facilitate a contribution against an upstream repository."}, prepDevEnvTool(*githubToken))
 
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		log.Fatal(err)
