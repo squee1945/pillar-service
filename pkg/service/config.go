@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/squee1945/pillar-service/pkg/logger"
 	"github.com/squee1945/pillar-service/pkg/secrets"
@@ -27,13 +26,12 @@ type Config struct {
 	AppPrivateKeySecretName string
 	GeminiAPIKeySecretName  string
 
+	SubBuildServiceAccount string
+	SubBuildLogsBucket     string
+
 	// Optional
-	Transport             http.RoundTripper
-	ServiceName           string
-	TokenExchangeTimeout  time.Duration
-	RunnerTimeout         time.Duration
-	MCPToolTimeout        time.Duration
-	GeminiMaxSessionTurns int
+	Transport   http.RoundTripper
+	ServiceName string
 }
 
 func (c Config) validate() error {
@@ -71,10 +69,13 @@ func (c Config) validate() error {
 		return fmt.Errorf("AppPrivateKeySecretName must be set")
 	}
 	if c.GeminiAPIKeySecretName == "" {
-		return fmt.Errorf("AppPrivateKeySecretName must be set")
+		return fmt.Errorf("GeminiAPIKeySecretName must be set")
 	}
-	if c.TokenExchangeTimeout == 0 {
-		return fmt.Errorf("TokenExchangeTimeout must be set")
+	if c.SubBuildServiceAccount == "" {
+		return fmt.Errorf("SubBuildServiceAccount must be set")
+	}
+	if c.SubBuildLogsBucket == "" {
+		return fmt.Errorf("SubBuildLogsBucket must be set")
 	}
 	return nil
 }

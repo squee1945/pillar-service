@@ -66,6 +66,29 @@ func (p *promptReleasePublished) Data(context.Context) (any, error) {
 	}, nil
 }
 
+type promptIssueCommentCreatedPopulatePR struct {
+	commit string
+	event  *github.IssueCommentEvent
+}
+
+func (p *promptIssueCommentCreatedPopulatePR) Name(context.Context) string {
+	return "issue_comment_created_populate_pr"
+}
+
+func (p *promptIssueCommentCreatedPopulatePR) Data(context.Context) (any, error) {
+	js, err := eventJSON(p.event.GetIssue())
+	if err != nil {
+		return nil, err
+	}
+	return struct {
+		Commit          string
+		PullRequestJSON string
+	}{
+		Commit:          p.commit,
+		PullRequestJSON: js,
+	}, nil
+}
+
 func eventJSON(event any) (string, error) {
 	js, err := json.MarshalIndent(event, "", "  ")
 	if err != nil {

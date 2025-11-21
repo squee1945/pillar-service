@@ -30,6 +30,14 @@ resource "google_cloud_run_v2_service" "default" {
         value = google_service_account.default["runner"].id
       }
       env {
+        name  = "SUB_BUILD_SERVICE_ACCOUNT"
+        value = google_service_account.default["sub-build"].id
+      }
+      env {
+        name  = "SUB_BUILD_LOGS_BUCKET"
+        value = google_storage_bucket.sub_build_logs.id
+      }
+      env {
         name  = "PREP_IMAGE"
         value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.runner_images.repository_id}/prep:latest"
       }

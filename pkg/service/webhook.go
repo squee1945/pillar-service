@@ -55,6 +55,13 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case *github.IssueCommentEvent:
+		s.Log.Debug(ctx, "Received issueComment %s event (repo: %q issue: %d comment: %d)", event.GetAction(), event.GetRepo().GetFullName(), event.GetIssue().GetNumber(), event.GetComment().GetID())
+		if err := s.issueCommentHandler(ctx, event); err != nil {
+			s.serverError(w, r, http.StatusInternalServerError, "issueComment event handler: %v", err)
+			return
+		}
+
 	default:
 		s.Log.Info(ctx, "Received unhandled event type: %s", github.WebHookType(r))
 	}

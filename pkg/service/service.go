@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"text/template"
-	"time"
 )
 
 const (
-	defaultTokenExchangeTimeout = 30 * time.Second
-	defaultServiceName          = "pillar"
+	defaultServiceName = "pillar"
 )
 
 type Service struct {
@@ -28,9 +26,6 @@ func New(ctx context.Context, cfg Config) (*Service, error) {
 	}
 	if cfg.ServiceName == "" {
 		cfg.ServiceName = defaultServiceName
-	}
-	if cfg.TokenExchangeTimeout == 0 {
-		cfg.TokenExchangeTimeout = defaultTokenExchangeTimeout
 	}
 
 	prompts, err := parsePromptTemplates(ctx)

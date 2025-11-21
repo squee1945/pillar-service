@@ -10,10 +10,14 @@ import (
 	"github.com/squee1945/pillar-service/pkg/runner"
 )
 
-func (s *Service) run(ctx context.Context, installationID int64, repo *github.Repository, prompt string) error {
+func (s *Service) run(ctx context.Context, installationID int64, repo *github.Repository, prompt string, configOpts ...configOption) error {
 	cfg, err := s.runnerConfig(ctx, installationID, repo)
 	if err != nil {
 		return fmt.Errorf("generating runner config: %v", err)
+	}
+
+	for _, o := range configOpts {
+		o(&cfg)
 	}
 
 	cfg.Prompt = prompt
@@ -32,19 +36,18 @@ func (s *Service) runnerConfigBase(ctx context.Context) (runner.Config, error) {
 	}
 
 	return runner.Config{
-		Log:                   s.Log,
-		ProjectID:             s.ProjectID,
-		Region:                s.Region,
-		PromptBucket:          s.PromptBucket,
-		KMSKeyName:            s.KMSKeyName,
-		ServiceAccount:        s.RunnerServiceAccount,
-		PrepImage:             s.PrepImage,
-		DevBranch:             fmt.Sprintf("%s-%d-%s", s.ServiceName, time.Now().Unix(), randomString(4)),
-		PromptImage:           s.PromptImage,
-		RunnerTimeout:         s.RunnerTimeout,
-		MCPToolTimeout:        s.MCPToolTimeout,
-		GeminiMaxSessionTurns: s.GeminiMaxSessionTurns,
-		GeminiAPIKey:          string(geminiAPIKey),
+		Log:                    s.Log,
+		ProjectID:              s.ProjectID,
+		Region:                 s.Region,
+		PromptBucket:           s.PromptBucket,
+		KMSKeyName:             s.KMSKeyName,
+		ServiceAccount:         s.RunnerServiceAccount,
+		PrepImage:              s.PrepImage,
+		DevBranch:              fmt.Sprintf("%s-%d-%s", s.ServiceName, time.Now().Unix(), randomString(4)),
+		PromptImage:            s.PromptImage,
+		GeminiAPIKey:           string(geminiAPIKey),
+		SubBuildServiceAccount: s.SubBuildServiceAccount,
+		SubBuildLogsBucket:     s.SubBuildLogsBucket,
 	}, nil
 }
 
@@ -63,7 +66,32 @@ func (s *Service) runnerConfig(ctx context.Context, installationID int64, repo *
 	cfg.Repo = repo.GetName()
 	cfg.DefaultBranch = repo.GetDefaultBranch()
 	return cfg, nil
+}
 
+type configOption func(*runner.Config)
+
+func withDevHelperIncludeTools(tools []string) configOption {
+	return func(cfg *runner.Config) {
+		cfg.DevHelperIncludeTools = tools
+	}
+}
+
+func withDevHelperExcludeTools(tools []string) configOption {
+	return func(cfg *runner.Config) {
+		cfg.DevHelperExcludeTools = tools
+	}
+}
+
+func withGithubIncludeTools(tools []string) configOption {
+	return func(cfg *runner.Config) {
+		cfg.GithubIncludeTools = tools
+	}
+}
+
+func withGithubExcludeTools(tools []string) configOption {
+	return func(cfg *runner.Config) {
+		cfg.GithubExcludeTools = tools
+	}
 }
 
 const consonants = "bcdfghjklmnpqrstvwxyz"

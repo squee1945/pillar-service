@@ -27,12 +27,12 @@ type config struct {
 	GitHubPrivateKeySecretName string `env:"GITHUB_PRIVATE_KEY_SECRET_NAME,required"`
 	GeminiApiKeySecretName     string `env:"GEMINI_API_KEY_SECRET_NAME,required"`
 
-	Port                  string        `env:"PORT,default=8080"`
-	SecretCacheTTL        time.Duration `env:"SECRET_CACHE_TTL,default=1m"`
-	RunnerTimeout         time.Duration `env:"RUNNER_TIMEOUT,default=600s"`
-	TokenExchangeTimeout  time.Duration `env:"TOKEN_EXCHANGE_TIMEOUT,default=30s"`
-	MCPToolTimeout        time.Duration `env:"MCP_TOOL_TIMEOUT,default=30s"`
-	GeminiMaxSessionTurns int           `env:"GEMINI_MAX_SESSION_TURNS,default=20"`
+	Port           string        `env:"PORT,default=8080"`
+	SecretCacheTTL time.Duration `env:"SECRET_CACHE_TTL,default=1m"`
+
+	// A "SubBuild" is a build that is configured and created by the runner.
+	SubBuildServiceAccount string `env:"SUB_BUILD_SERVICE_ACCOUNT",required`
+	SubBuildLogsBucket     string `env:"SUB_BUILD_LOGS_BUCKET",required`
 }
 
 func main() {
@@ -64,10 +64,8 @@ func main() {
 		PrepImage:               c.PrepImage,
 		PromptImage:             c.PromptImage,
 		GeminiAPIKeySecretName:  c.GeminiApiKeySecretName,
-		RunnerTimeout:           c.RunnerTimeout,
-		TokenExchangeTimeout:    c.TokenExchangeTimeout,
-		MCPToolTimeout:          c.MCPToolTimeout,
-		GeminiMaxSessionTurns:   c.GeminiMaxSessionTurns,
+		SubBuildServiceAccount:  c.SubBuildServiceAccount,
+		SubBuildLogsBucket:      c.SubBuildLogsBucket,
 	}
 
 	server, err := service.New(ctx, serverConfig)

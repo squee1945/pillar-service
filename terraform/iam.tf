@@ -6,7 +6,7 @@ resource "google_service_account" "default" {
   for_each = {
     "pillar-service" = "Service Account for the Pillar Service"
     "runner"         = "Service Account for the Cloud Build runner"
-    # "image-builder"       = "Service Account for building the image from runner-image/src and deploying to AR"
+    "sub-build"      = "Service Account for builds created by the agent."
   }
 
   account_id   = each.key
@@ -68,4 +68,28 @@ resource "google_project_iam_member" "runner_storage_viewer" {
   project = var.project_id
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.default["runner"].email}"
+}
+
+resource "google_project_iam_member" "runner_cloud_build_creator" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.editor"
+  member  = "serviceAccount:${google_service_account.default["runner"].email}"
+}
+
+resource "google_storage_bucket_iam_member" "runner_logs_reader" {
+  bucket = google_storage_bucket.sub_build_logs.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.default["runner"].email}"
+}
+
+resource "google_service_account_iam_member" "cli_runner_can_impersonate_sub_build" {
+  service_account_id = google_service_account.default["sub-build"].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.default["runner"].email}"
+}
+
+resource "google_storage_bucket_iam_member" "sub_build_log_bucket_viewer" {
+  bucket = google_storage_bucket.sub_build_logs.name
+  role   = "roles/storage.admin"
+  member = "serviceAccount:${google_service_account.default["sub-build"].email}"
 }

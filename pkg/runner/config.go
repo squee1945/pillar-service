@@ -26,10 +26,18 @@ type Config struct {
 	GeminiAPIKey string
 	Prompt       string // If empty, Gemini CLI not invoked.
 
+	SubBuildServiceAccount string
+	SubBuildLogsBucket     string
+
 	// Optional config
 	RunnerTimeout         time.Duration
-	MCPToolTimeout        time.Duration
 	GeminiMaxSessionTurns int
+	DevHelperIncludeTools []string
+	DevHelperExcludeTools []string
+	DevHelperMCPTimeout   time.Duration
+	GithubIncludeTools    []string
+	GithubExcludeTools    []string
+	GithubMCPTimeout      time.Duration
 }
 
 func (c Config) validate() error {
@@ -68,6 +76,12 @@ func (c Config) validate() error {
 	}
 	if c.PromptImage == "" {
 		return fmt.Errorf("PromptImage must be set")
+	}
+	if c.SubBuildServiceAccount == "" {
+		return fmt.Errorf("SubBuildServiceAccount must be set")
+	}
+	if c.SubBuildLogsBucket == "" {
+		return fmt.Errorf("SubBuildLogsBucket must be set")
 	}
 	return nil
 }

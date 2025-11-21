@@ -16,9 +16,9 @@ import (
 const (
 	gcsUploadTimeout = 30 * time.Second
 
-	defaultRunnerTimeout         = 10 * time.Minute
+	defaultRunnerTimeout         = 20 * time.Minute
 	defaultMCPToolTimeout        = 2 * time.Minute
-	defaultGeminiMaxSessionTurns = 50
+	defaultGeminiMaxSessionTurns = 200
 
 	devHelperCommand = "devhelpermcp"
 )
@@ -36,8 +36,11 @@ func New(ctx context.Context, cfg Config) (*R, error) {
 	if cfg.RunnerTimeout == 0 {
 		cfg.RunnerTimeout = defaultRunnerTimeout
 	}
-	if cfg.MCPToolTimeout == 0 {
-		cfg.MCPToolTimeout = defaultMCPToolTimeout
+	if cfg.DevHelperMCPTimeout == 0 {
+		cfg.DevHelperMCPTimeout = defaultMCPToolTimeout
+	}
+	if cfg.GithubMCPTimeout == 0 {
+		cfg.GithubMCPTimeout = defaultMCPToolTimeout
 	}
 	if cfg.GeminiMaxSessionTurns == 0 {
 		cfg.GeminiMaxSessionTurns = defaultGeminiMaxSessionTurns
@@ -150,8 +153,16 @@ func (r *R) prepareSettings(ctx context.Context) (string, error) {
 			"devHelper": {
 				Description: "High level tools to assist in creating contributions to GitHub repositories",
 				Command:     devHelperCommand,
-				Args:        []string{"--github_token=" + r.GitHubToken},
-				Timeout:     r.MCPToolTimeout.Milliseconds(),
+				Args: []string{
+					"--github_token=" + r.GitHubToken,
+					"--project_id=" + r.ProjectID,
+					"--region=" + r.Region,
+					"--sub_build_service_account=" + r.SubBuildServiceAccount,
+					"--sub_build_logs_bucket=" + r.SubBuildLogsBucket,
+				},
+				Timeout:      r.DevHelperMCPTimeout.Milliseconds(),
+				IncludeTools: r.DevHelperIncludeTools,
+				ExcludeTools: r.DevHelperExcludeTools,
 			},
 			"github": {
 				Description: "Tools to interact with GitHub repositories",
@@ -159,7 +170,9 @@ func (r *R) prepareSettings(ctx context.Context) (string, error) {
 				Headers: map[string]string{
 					"Authorization": "Bearer " + r.GitHubToken,
 				},
-				Timeout: r.MCPToolTimeout.Milliseconds(),
+				Timeout:      r.GithubMCPTimeout.Milliseconds(),
+				IncludeTools: r.GithubIncludeTools,
+				ExcludeTools: r.GithubExcludeTools,
 			},
 		},
 		MaxSessionTurns: r.GeminiMaxSessionTurns,

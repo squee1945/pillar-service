@@ -12,6 +12,18 @@ echo gcscp --gcs-path="${SETTINGS_GCS_PATH:?}" --local-path="${SETTINGS_FILE}"
 gcscp --gcs-path="${SETTINGS_GCS_PATH:?}" --local-path="${SETTINGS_FILE}"
 
 echo ""
+echo "*** SETTINGS ***********************************************************"
+cat  "${SETTINGS_FILE}" | sed -E 's/ghs_[^"]*"/ghs_<redacted>"/g'
+echo "************************************************************************"
+echo ""
+
+echo ""
+echo "*** TOOLS **************************************************************"
+gemini -p "list the tools that you have available"
+echo "************************************************************************"
+echo ""
+
+echo ""
 echo "*** PROMPT *************************************************************"
 cat  "${PROMPT_FILE}"
 echo "************************************************************************"
