@@ -97,11 +97,26 @@ func (s *Service) issueCommentHandler(ctx context.Context, event *github.IssueCo
 	commit := pr.GetHead().GetSHA()
 
 	// Run the prompt.
-	prompt, err := s.renderPrompt(ctx, &promptIssueCommentCreatedPopulatePR{commit: commit, event: event})
+	t := &promptIssueCommentCreatedPopulatePR{
+		projectID:        s.ProjectID,
+		region:           s.Region,
+		commit:           commit,
+		testOutputBucket: s.SubBuildTestOutputBucket,
+		goRepository:     s.SubBuildGoRepository,
+		event:            event,
+	}
+
+	prompt, err := s.renderPrompt(ctx, t)
 	if err != nil {
 		return fmt.Errorf("rendering prompt: %v", err)
 	}
-	devHelperIncludeTools := []string{"create_cloud_build", "get_cloud_build", "get_cloud_build_logs"}
+	devHelperIncludeTools := []string{
+		"create_cloud_build",
+		"get_cloud_build",
+		"get_cloud_build_logs",
+		"fetch_test_output",
+		"fetch_provenance",
+	}
 	if err := s.run(ctx, installationID, event.GetRepo(), prompt, withDevHelperIncludeTools(devHelperIncludeTools)); err != nil {
 		return err
 	}

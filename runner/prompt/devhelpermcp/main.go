@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	githubToken            = flag.String("github_token", "", "GitHub access token")
-	subBuildServiceAccount = flag.String("sub_build_service_account", "", "Service account for sub-build")
-	subBuildLogsBucket     = flag.String("sub_build_logs_bucket", "", "Log bucker for sub-build")
-	projectID              = flag.String("project_id", "", "The project ID")
-	region                 = flag.String("region", "", "The region")
+	githubToken              = flag.String("github_token", "", "GitHub access token")
+	subBuildServiceAccount   = flag.String("sub_build_service_account", "", "Service account for sub-build")
+	subBuildLogsBucket       = flag.String("sub_build_logs_bucket", "", "Log bucket for sub-build")
+	subBuildTestOutputBucket = flag.String("sub_build_test_output_bucket", "", "Test output bucket for sub-build")
+	projectID                = flag.String("project_id", "", "The project ID")
+	region                   = flag.String("region", "", "The region")
 )
 
 func main() {
@@ -31,6 +32,10 @@ func main() {
 
 	if *subBuildLogsBucket == "" {
 		log.Fatal("--sub_build_logs_bucket is required")
+	}
+
+	if *subBuildTestOutputBucket == "" {
+		log.Fatal("--sub_build_test_output_bucket is required")
 	}
 
 	if *projectID == "" {
@@ -81,6 +86,22 @@ func main() {
 			Description: "Gets the logs for a Google Cloud Build build.",
 		},
 		getCloudBuildLogsTool(*projectID, *region),
+	)
+
+	mcp.AddTool(server,
+		&mcp.Tool{
+			Name:        "fetch_test_output",
+			Description: "Gets the test output when the test output logs have been uploaded to the test log repository.",
+		},
+		fetchTestOutputTool(*subBuildTestOutputBucket),
+	)
+
+	mcp.AddTool(server,
+		&mcp.Tool{
+			Name:        "fetch_provenance",
+			Description: "Gets the provenance for artifacts uploaded during a build.",
+		},
+		fetchProvenanceTool(*projectID, *region),
 	)
 
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {

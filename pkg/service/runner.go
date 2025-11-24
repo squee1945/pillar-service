@@ -36,18 +36,20 @@ func (s *Service) runnerConfigBase(ctx context.Context) (runner.Config, error) {
 	}
 
 	return runner.Config{
-		Log:                    s.Log,
-		ProjectID:              s.ProjectID,
-		Region:                 s.Region,
-		PromptBucket:           s.PromptBucket,
-		KMSKeyName:             s.KMSKeyName,
-		ServiceAccount:         s.RunnerServiceAccount,
-		PrepImage:              s.PrepImage,
-		DevBranch:              fmt.Sprintf("%s-%d-%s", s.ServiceName, time.Now().Unix(), randomString(4)),
-		PromptImage:            s.PromptImage,
-		GeminiAPIKey:           string(geminiAPIKey),
-		SubBuildServiceAccount: s.SubBuildServiceAccount,
-		SubBuildLogsBucket:     s.SubBuildLogsBucket,
+		Log:                      s.Log,
+		ProjectID:                s.ProjectID,
+		Region:                   s.Region,
+		PromptBucket:             s.PromptBucket,
+		KMSKeyName:               s.KMSKeyName,
+		ServiceAccount:           s.RunnerServiceAccount,
+		PrepImage:                s.PrepImage,
+		DevBranch:                fmt.Sprintf("%s-%d-%s", s.ServiceName, time.Now().Unix(), randomString(4)),
+		PromptImage:              s.PromptImage,
+		GeminiAPIKey:             string(geminiAPIKey),
+		SubBuildServiceAccount:   s.SubBuildServiceAccount,
+		SubBuildLogsBucket:       s.SubBuildLogsBucket,
+		SubBuildTestOutputBucket: s.SubBuildTestOutputBucket,
+		SubBuildGoRepository:     s.SubBuildGoRepository,
 	}, nil
 }
 

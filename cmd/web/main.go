@@ -31,8 +31,10 @@ type config struct {
 	SecretCacheTTL time.Duration `env:"SECRET_CACHE_TTL,default=1m"`
 
 	// A "SubBuild" is a build that is configured and created by the runner.
-	SubBuildServiceAccount string `env:"SUB_BUILD_SERVICE_ACCOUNT",required`
-	SubBuildLogsBucket     string `env:"SUB_BUILD_LOGS_BUCKET",required`
+	SubBuildServiceAccount   string `env:"SUB_BUILD_SERVICE_ACCOUNT",required`
+	SubBuildLogsBucket       string `env:"SUB_BUILD_LOGS_BUCKET",required`
+	SubBuildTestOutputBucket string `env:"SUB_BUILD_TEST_OUTPUT_BUCKET",required`
+	SubBuildGoRepository     string `env:"SUB_BUILD_GO_REPOSITORY",required`
 }
 
 func main() {
@@ -51,21 +53,23 @@ func main() {
 	defer secretAccessor.Close()
 
 	serverConfig := service.Config{
-		Log:                     log,
-		AppID:                   c.GitHubAppID,
-		Secrets:                 secretAccessor,
-		WebhookSecretName:       c.GitHubWebhookSecretName,
-		AppPrivateKeySecretName: c.GitHubPrivateKeySecretName,
-		ProjectID:               c.ProjectID,
-		Region:                  c.Region,
-		PromptBucket:            c.PromptBucket,
-		KMSKeyName:              c.KMSKeyName,
-		RunnerServiceAccount:    c.RunnerServiceAccount,
-		PrepImage:               c.PrepImage,
-		PromptImage:             c.PromptImage,
-		GeminiAPIKeySecretName:  c.GeminiApiKeySecretName,
-		SubBuildServiceAccount:  c.SubBuildServiceAccount,
-		SubBuildLogsBucket:      c.SubBuildLogsBucket,
+		Log:                      log,
+		AppID:                    c.GitHubAppID,
+		Secrets:                  secretAccessor,
+		WebhookSecretName:        c.GitHubWebhookSecretName,
+		AppPrivateKeySecretName:  c.GitHubPrivateKeySecretName,
+		ProjectID:                c.ProjectID,
+		Region:                   c.Region,
+		PromptBucket:             c.PromptBucket,
+		KMSKeyName:               c.KMSKeyName,
+		RunnerServiceAccount:     c.RunnerServiceAccount,
+		PrepImage:                c.PrepImage,
+		PromptImage:              c.PromptImage,
+		GeminiAPIKeySecretName:   c.GeminiApiKeySecretName,
+		SubBuildServiceAccount:   c.SubBuildServiceAccount,
+		SubBuildLogsBucket:       c.SubBuildLogsBucket,
+		SubBuildTestOutputBucket: c.SubBuildTestOutputBucket,
+		SubBuildGoRepository:     c.SubBuildGoRepository,
 	}
 
 	server, err := service.New(ctx, serverConfig)

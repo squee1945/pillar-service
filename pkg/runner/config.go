@@ -26,8 +26,10 @@ type Config struct {
 	GeminiAPIKey string
 	Prompt       string // If empty, Gemini CLI not invoked.
 
-	SubBuildServiceAccount string
-	SubBuildLogsBucket     string
+	SubBuildServiceAccount   string
+	SubBuildLogsBucket       string
+	SubBuildTestOutputBucket string
+	SubBuildGoRepository     string
 
 	// Optional config
 	RunnerTimeout         time.Duration
@@ -82,6 +84,12 @@ func (c Config) validate() error {
 	}
 	if c.SubBuildLogsBucket == "" {
 		return fmt.Errorf("SubBuildLogsBucket must be set")
+	}
+	if c.SubBuildTestOutputBucket == "" {
+		return fmt.Errorf("SubBuildTestOutputBucket must be set")
+	}
+	if c.SubBuildGoRepository == "" {
+		return fmt.Errorf("SubBuildGoRepository must be set")
 	}
 	return nil
 }

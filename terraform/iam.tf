@@ -82,6 +82,12 @@ resource "google_storage_bucket_iam_member" "runner_logs_reader" {
   member = "serviceAccount:${google_service_account.default["runner"].email}"
 }
 
+resource "google_project_iam_member" "runner_container_analysis_viewer" {
+  project = var.project_id
+  role    = "roles/containeranalysis.occurrences.viewer"
+  member  = "serviceAccount:${google_service_account.default["runner"].email}"
+}
+
 resource "google_service_account_iam_member" "cli_runner_can_impersonate_sub_build" {
   service_account_id = google_service_account.default["sub-build"].name
   role               = "roles/iam.serviceAccountUser"
@@ -90,6 +96,18 @@ resource "google_service_account_iam_member" "cli_runner_can_impersonate_sub_bui
 
 resource "google_storage_bucket_iam_member" "sub_build_log_bucket_viewer" {
   bucket = google_storage_bucket.sub_build_logs.name
+  role   = "roles/storage.admin"
+  member = "serviceAccount:${google_service_account.default["sub-build"].email}"
+}
+
+resource "google_artifact_registry_repository_iam_member" "go_repo_writer" {
+  repository = google_artifact_registry_repository.sub_build_go_repository.id
+  role       = "roles/artifactregistry.writer"
+  member     = "serviceAccount:${google_service_account.default["sub-build"].email}"
+}
+
+resource "google_storage_bucket_iam_member" "sub_build_test_output_creator" {
+  bucket = google_storage_bucket.sub_build_test_output.name
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.default["sub-build"].email}"
 }

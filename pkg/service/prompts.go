@@ -67,8 +67,12 @@ func (p *promptReleasePublished) Data(context.Context) (any, error) {
 }
 
 type promptIssueCommentCreatedPopulatePR struct {
-	commit string
-	event  *github.IssueCommentEvent
+	projectID        string
+	region           string
+	commit           string
+	testOutputBucket string
+	goRepository     string
+	event            *github.IssueCommentEvent
 }
 
 func (p *promptIssueCommentCreatedPopulatePR) Name(context.Context) string {
@@ -81,11 +85,19 @@ func (p *promptIssueCommentCreatedPopulatePR) Data(context.Context) (any, error)
 		return nil, err
 	}
 	return struct {
-		Commit          string
-		PullRequestJSON string
+		ProjectID        string
+		Region           string
+		Commit           string
+		TestOutputBucket string
+		GoRepository     string
+		PullRequestJSON  string
 	}{
-		Commit:          p.commit,
-		PullRequestJSON: js,
+		ProjectID:        p.projectID,
+		Region:           p.region,
+		Commit:           p.commit,
+		TestOutputBucket: p.testOutputBucket,
+		GoRepository:     p.goRepository,
+		PullRequestJSON:  js,
 	}, nil
 }
 

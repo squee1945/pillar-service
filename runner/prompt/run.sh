@@ -30,4 +30,4 @@ echo "************************************************************************"
 echo ""
 
 cd ${REPO:?}
-cat "${PROMPT_FILE}" | gemini --yolo --debug 2>&1
+cat "${PROMPT_FILE}" | gemini --yolo --debug --model=gemini-2.5-pro 2>&1

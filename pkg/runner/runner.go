@@ -159,6 +159,7 @@ func (r *R) prepareSettings(ctx context.Context) (string, error) {
 					"--region=" + r.Region,
 					"--sub_build_service_account=" + r.SubBuildServiceAccount,
 					"--sub_build_logs_bucket=" + r.SubBuildLogsBucket,
+					"--sub_build_test_output_bucket=" + r.SubBuildTestOutputBucket,
 				},
 				Timeout:      r.DevHelperMCPTimeout.Milliseconds(),
 				IncludeTools: r.DevHelperIncludeTools,

@@ -17,16 +17,26 @@ Using available tools, attach a new issue comment to the Pull Request.
 
 This new comment should contain:
   - A Concise description of the changes made in the Pull Request.
-  - A Description of how the code was built and tested, including the
-    cloudbuild.yaml build script.
-  - A record of provenance and a software bill of materials (SBOM).
+  - The build configuration from the `get_cloud_build` tool *for the
+    successful build* (or the last failing build if you give up).
+  - The test outputs from the `fetch_test_output` tool.
+  - The provenance outputs from the `fetch_provenance` tool.
 
 ** Building and Testing
 
 To build and test the code, a `create_cloud_build` tool is provided.
-As input, you need to generate a cloudbuild.yaml (for Google Cloud Build) that
-will clone the code base, build it, and test it. The pull request head commit
-is `{{ .Commit }}`; use this for the `source_commit` parameter.
+ - As input, you need to generate a cloudbuild.json (for Google Cloud Build).
+ - The `create_cloud_build` tool will automatically add a source section to
+   pull the source code, so you don't need an explicit configuration for the
+   source.
+ - The cloudbuild.json should have steps to build the code, test the
+   code, and generate test output.
+ - **Importantly**, the build should upload the test output artifacts **AND**
+   any language artifacts (the language artifacts are used to generate
+   provenance).
+ - You can use multiple build iterations if there are problems, but ultimately
+   all of these steps need to be performed in a single, successful build for
+   it to be valid.
 
 A `get_cloud_build` tool can be used to get the details of the build and see if
 it has completed successfully. *NOTE* `get_cloud_build` may fail with a
@@ -34,17 +44,101 @@ NotFound error if called immediately after `create_cloud_build`. If it does,
 try again after a couple of seconds.
 
 You can use the `get_cloud_build_logs` tool to retrieve the
-build logs.
+build logs. In particular, use this tool to look for errors on
+failing builds.
 
-If there were errors, attempt to adjust the cloudbuild.yaml
+If there were errors, attempt to adjust the cloudbuild.json
 and recreate the build, continuing until you get a successful build and test.
 If the build or tests seem to be broken, mention the failures in your added
 issue comment, so that the Pull Request author can take action.
 
-## Fetching provenance and SBOM
+## Generating provenance
 
-Try your best. Add your attempts to your added issue comment so that we can
-create additional tools to make your job easier in future attemps.
+The generation of provenance is different for different languages.
+
+### Generating attestations for Go
+
+There are two different aspects for Go:
+  - generating artifact provenance
+  - capturing test output
+
+**It is important to configure _both_ the test output objects and the
+`goModules` artifacts.**
+
+#### Generating artifact provenance for Go
+
+**IMPORTANT** THIS IS AN ESSENTIAL STEP!
+
+To generate artifact provenance for a Go module, you must include the following
+in your cloudbuild.json:
+
+```
+# Upload Go module to artifact registry
+"artifacts": {
+  ...
+  "goModules": [
+    {
+      "repositoryName": "{{ .GoRepository }}",
+      "repositoryLocation": "{{ .Region }}",
+      "repositoryProjectId": "{{ .ProjectID }}",
+      "sourcePath": "<sourcePath>",
+      "modulePath": "<appPath>",
+      "moduleVersion": "<moduleVersion>"
+    },
+    ...
+
+```
+
+Replace the following values:
+ - <sourcePath>: the path to the go.mod file in the build's workspace. In this
+   environment, this value should be (or start with) `/workspace`
+ - <appPath>: the path to your packaged application.
+ - <version>: the version number for your application, formatted in numbers and dots like v1.0.1.
+
+#### Capturing test output for Go
+
+To capture the test output for Go, include a step like the following
+in your cloudbuild.json (note that `${BUILD_ID}` can be
+given verbatim to Cloud Build; Cloud Build will make the correct substitution):
+
+```
+"steps": [
+
+  # Steps to build and test
+  ...
+
+  # Run tests and save to file
+  {
+    "name": "golang:<goVersion>",
+    "entrypoint": "/bin/bash",
+    "args": [
+      "-c",
+      "go install github.com/jstemmer/go-junit-report/v2@latest\n2>&1 go test -timeout 1m -v ./... | /go/bin/go-junit-report -set-exit-code -iocopy -out ${BUILD_ID}_test_log.xml"
+    ]
+```
+
+Additionally, you must upload the test logs to a bucket:
+
+```
+# Save test logs to Google Cloud Storage
+"artifacts": {
+  ...
+  "objects":
+    "location": "gs://{{ .TestOutputBucket }}/",
+    "paths": [
+      "${BUILD_ID}_test_log.xml"
+    ]
+```
+
+
+## Fetching test output and provenance
+
+To fetch the test log output, use the `fetch_test_output` tool.
+Include this in the summary in the comment you add to the PR.
+The filename looks like `${BUILD_ID}_test_log.xml`.
+
+To fetch the provenance output, use the `fetch_provenance` tool.
+Include this in the summary in the comment you add to the PR.
 
 # Tips!
 
@@ -52,7 +146,7 @@ create additional tools to make your job easier in future attemps.
   `create_cloud_build`. If it fails with a NotFound error, be sure to try it
   a few times, after a second or two.
 - Use <details> <summary> tags to hide lengthy sections of the comment
-  you add (like the cloudbuild.yaml, the provenance, and the SBOM).
+  you add (like the cloudbuild.json, the provenance, and the SBOM).
 - Before building the code, check for the language-specific config files to
   figure out what version of the runtime is needed. For example, for Go, you
   can inspect `go.mod` to determine the runtime requirements. For Node.js, you
