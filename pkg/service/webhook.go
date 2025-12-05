@@ -32,6 +32,7 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 		s.clientError(w, r, http.StatusBadRequest, "could not parse webhook: %v", err)
 		return
 	}
+	s.Log.Debug(ctx, "Event handler %q started.", github.DeliveryID(r))
 
 	eventJSON, err := json.MarshalIndent(event, "", "  ")
 	if err != nil {
@@ -50,10 +51,6 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 
 	case *github.ReleaseEvent:
 		s.Log.Debug(ctx, "Received release %s event (repo: %q release: %q)", event.GetAction(), event.GetRepo().GetFullName(), event.GetRelease().GetName())
-		if err := s.releaseEventHandler(ctx, event); err != nil {
-			s.serverError(w, r, http.StatusInternalServerError, "release event handler: %v", err)
-			return
-		}
 
 	case *github.IssueCommentEvent:
 		s.Log.Debug(ctx, "Received issueComment %s event (repo: %q issue: %d comment: %d)", event.GetAction(), event.GetRepo().GetFullName(), event.GetIssue().GetNumber(), event.GetComment().GetID())
@@ -66,6 +63,7 @@ func (s *Service) webhook(w http.ResponseWriter, r *http.Request) {
 		s.Log.Info(ctx, "Received unhandled event type: %s", github.WebHookType(r))
 	}
 
+	s.Log.Debug(ctx, "Event handler %q complete.", github.DeliveryID(r))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ok"))
 }

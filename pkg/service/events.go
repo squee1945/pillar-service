@@ -12,40 +12,6 @@ const (
 	cmdPopulatePR = "populate-pr"
 )
 
-var (
-	dependent = repository{owner: "kmonty-catamaran", repo: "deps-weather-webapp"}
-)
-
-type repository struct {
-	owner string
-	repo  string
-}
-
-func (s *Service) releaseEventHandler(ctx context.Context, event *github.ReleaseEvent) error {
-	switch action := event.GetAction(); action {
-	case "published":
-		break
-	default:
-		s.Log.Debug(ctx, "Ignoring release %s event", action)
-		return nil
-	}
-
-	// Find dependents (reverse dependencies).
-	// TODO
-
-	fork, err := s.fork(ctx, event.GetInstallation().GetID(), dependent.owner, dependent.repo, event.GetRepo().GetOwner())
-	if err != nil {
-		return fmt.Errorf("forking %s/%s: %v", dependent.owner, dependent.repo, err)
-	}
-
-	prompt, err := s.renderPrompt(ctx, &promptReleasePublished{event: event, dependent: fmt.Sprintf("https://github.com/%s/%s", dependent.owner, dependent.repo)})
-	if err != nil {
-		return fmt.Errorf("rendering prompt: %v", err)
-	}
-
-	return s.run(ctx, event.GetInstallation().GetID(), fork, prompt)
-}
-
 func (s *Service) issueCommentHandler(ctx context.Context, event *github.IssueCommentEvent) error {
 	switch action := event.GetAction(); action {
 	case "created":
@@ -102,7 +68,6 @@ func (s *Service) issueCommentHandler(ctx context.Context, event *github.IssueCo
 		region:           s.Region,
 		commit:           commit,
 		testOutputBucket: s.SubBuildTestOutputBucket,
-		goRepository:     s.SubBuildGoRepository,
 		event:            event,
 	}
 
@@ -110,15 +75,29 @@ func (s *Service) issueCommentHandler(ctx context.Context, event *github.IssueCo
 	if err != nil {
 		return fmt.Errorf("rendering prompt: %v", err)
 	}
-	devHelperIncludeTools := []string{
-		"create_cloud_build",
-		"get_cloud_build",
-		"get_cloud_build_logs",
-		"fetch_test_output",
-		"fetch_provenance",
+
+	opts := []adkConfigOption{
+		withDevHelperIncludeToolsADK(
+			"create_cloud_build",
+			"get_cloud_build",
+			"get_cloud_build_logs",
+			"fetch_test_output",
+			"fetch_provenance",
+		),
+		withGithubIncludeToolsADK(
+			"add_issue_comment",
+			"get_commit",
+			"get_file_contents",
+			// "list_branches",
+			"list_commits",
+			"pull_request_read",
+			"search_code",
+			// "update_pull_request",
+		),
 	}
-	if err := s.run(ctx, installationID, event.GetRepo(), prompt, withDevHelperIncludeTools(devHelperIncludeTools)); err != nil {
-		return err
+
+	if err := s.runADK(ctx, installationID, event.GetRepo(), prompt, opts...); err != nil {
+		return fmt.Errorf("running ADK: %v", err)
 	}
 
 	return nil

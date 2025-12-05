@@ -33,7 +33,10 @@ To build and test the code, a `create_cloud_build` tool is provided.
    code, and generate test output.
  - **Importantly**, the build should upload the test output artifacts **AND**
    any language artifacts (the language artifacts are used to generate
-   provenance).
+   provenance). Each build should create a new repository specific to the
+   type of artifact.
+   - If you are building Go artifacts, use the `create_go_repository` tool to
+     create a repository before the build
  - You can use multiple build iterations if there are problems, but ultimately
    all of these steps need to be performed in a single, successful build for
    it to be valid.
@@ -78,7 +81,7 @@ in your cloudbuild.json:
   ...
   "goModules": [
     {
-      "repositoryName": "{{ .GoRepository }}",
+      "repositoryName": "<repositoryID>",
       "repositoryLocation": "{{ .Region }}",
       "repositoryProjectId": "{{ .ProjectID }}",
       "sourcePath": "<sourcePath>",
@@ -90,10 +93,13 @@ in your cloudbuild.json:
 ```
 
 Replace the following values:
+ - <repositoryID>: the Go module repository ID as returned by the
+   `create_go_repository` tool.
  - <sourcePath>: the path to the go.mod file in the build's workspace. In this
    environment, this value should be (or start with) `/workspace`
  - <appPath>: the path to your packaged application.
- - <version>: the version number for your application, formatted in numbers and dots like v1.0.1.
+ - <moduleVersion>: the version number for your application, formatted in
+   numbers and dots like v1.0.1, matching the go.mod file.
 
 #### Capturing test output for Go
 
@@ -151,8 +157,9 @@ Include this in the summary in the comment you add to the PR.
   figure out what version of the runtime is needed. For example, for Go, you
   can inspect `go.mod` to determine the runtime requirements. For Node.js, you
   can inspect the `package.json` to determine the runtime requirements.
-  You can use tools like `list_directory` and `read_file` to search for these
-  files and pull their contents.
+  You can use tools like `get_file_contents` to search for these
+  files and pull their contents; use `sha="{{ .Commit }}"` when looking
+  for files to make sure you are pulling the correct one.
 
 # Pull Request details
 

@@ -22,14 +22,6 @@ resource "google_cloud_run_v2_service" "default" {
         value = var.region
       }
       env {
-        name  = "KMS_KEY_NAME"
-        value = google_kms_crypto_key.default.id
-      }
-      env {
-        name  = "RUNNER_SERVICE_ACCOUNT"
-        value = google_service_account.default["runner"].id
-      }
-      env {
         name  = "SUB_BUILD_SERVICE_ACCOUNT"
         value = google_service_account.default["sub-build"].id
       }
@@ -40,22 +32,6 @@ resource "google_cloud_run_v2_service" "default" {
       env {
         name  = "SUB_BUILD_TEST_OUTPUT_BUCKET"
         value = google_storage_bucket.sub_build_test_output.id
-      }
-      env {
-        name  = "SUB_BUILD_GO_REPOSITORY"
-        value = google_artifact_registry_repository.sub_build_go_repository.name
-      }
-      env {
-        name  = "PREP_IMAGE"
-        value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.runner_images.repository_id}/prep:latest"
-      }
-      env {
-        name  = "PROMPT_IMAGE"
-        value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.runner_images.repository_id}/prompt:latest"
-      }
-      env {
-        name  = "PROMPT_BUCKET"
-        value = google_storage_bucket.prompt_bucket.name
       }
       env {
         name  = "GITHUB_APP_ID"

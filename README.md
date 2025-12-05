@@ -43,7 +43,7 @@ https://<cloud_run_service_name>.us-west1.run.app/webhook
 ```
 
 TODO: Describe which webhook events to subscribe to. Importantly, you must
-subscribe to release events for the current example.
+subscribe to issue_comment events for the current example.
 
 ## Install the GitHub app
 
@@ -53,8 +53,9 @@ TODO: Improve these instructions.
 
 ## Generate a webhook event
 
-Currently, only the creation of a release triggers handling, so on the
-repository where you installed the GitHub app, create a new release.
+Currently, only commenting on a pull request with the specific command
+`/pillar populate-pr` will cause any activity.
 
-You should see the webhook event hit your Cloud Run logs, then see a runner
-started in Cloud Build.
+You should see the webhook event hit your Cloud Run logs and the Cloud Run
+service will run the ADK. Depending on the prompt, you will likely see
+Artifact Registry repositories created and Cloud Build builds kicked off.

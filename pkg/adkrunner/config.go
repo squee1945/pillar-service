@@ -1,4 +1,4 @@
-package runner
+package adkrunner
 
 import (
 	"fmt"
@@ -8,58 +8,46 @@ import (
 )
 
 type Config struct {
-	Log            logger.L
-	ProjectID      string
-	Region         string
-	PromptBucket   string
-	KMSKeyName     string
-	ServiceAccount string
+	Log          logger.L
+	ServiceName  string
+	ProjectID    string
+	Region       string
+	GeminiAPIKey string
+	Prompt       string
 
-	PrepImage     string
 	GitHubToken   string
 	Owner         string
 	Repo          string
 	DefaultBranch string
-	DevBranch     string
-
-	PromptImage  string
-	GeminiAPIKey string
-	Prompt       string // If empty, Gemini CLI not invoked.
 
 	SubBuildServiceAccount   string
 	SubBuildLogsBucket       string
 	SubBuildTestOutputBucket string
-	SubBuildGoRepository     string
 
 	// Optional config
 	RunnerTimeout         time.Duration
 	GeminiMaxSessionTurns int
 	DevHelperIncludeTools []string
 	DevHelperExcludeTools []string
-	DevHelperMCPTimeout   time.Duration
 	GithubIncludeTools    []string
 	GithubExcludeTools    []string
-	GithubMCPTimeout      time.Duration
 }
 
 func (c Config) validate() error {
+	if c.ServiceName == "" {
+		return fmt.Errorf("ServiceName must be set")
+	}
 	if c.ProjectID == "" {
 		return fmt.Errorf("ProjectID must be set")
 	}
 	if c.Region == "" {
 		return fmt.Errorf("Region must be set")
 	}
-	if c.PromptBucket == "" {
-		return fmt.Errorf("PromptBucket must be set")
+	if c.GeminiAPIKey == "" {
+		return fmt.Errorf("GeminiAPIKey must be set")
 	}
-	if c.KMSKeyName == "" {
-		return fmt.Errorf("KMSKeyName must be set")
-	}
-	if c.ServiceAccount == "" {
-		return fmt.Errorf("ServiceAccount must be set")
-	}
-	if c.PrepImage == "" {
-		return fmt.Errorf("PrepImage must be set")
+	if c.Prompt == "" {
+		return fmt.Errorf("Prompt must be set")
 	}
 	if c.GitHubToken == "" {
 		return fmt.Errorf("GitHubToken must be set")
@@ -73,12 +61,6 @@ func (c Config) validate() error {
 	if c.DefaultBranch == "" {
 		return fmt.Errorf("DefaultBranch must be set")
 	}
-	if c.DevBranch == "" {
-		return fmt.Errorf("DevBranch must be set")
-	}
-	if c.PromptImage == "" {
-		return fmt.Errorf("PromptImage must be set")
-	}
 	if c.SubBuildServiceAccount == "" {
 		return fmt.Errorf("SubBuildServiceAccount must be set")
 	}
@@ -87,9 +69,6 @@ func (c Config) validate() error {
 	}
 	if c.SubBuildTestOutputBucket == "" {
 		return fmt.Errorf("SubBuildTestOutputBucket must be set")
-	}
-	if c.SubBuildGoRepository == "" {
-		return fmt.Errorf("SubBuildGoRepository must be set")
 	}
 	return nil
 }

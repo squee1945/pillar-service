@@ -15,12 +15,6 @@ type Config struct {
 	Region    string
 	AppID     int64
 
-	PromptBucket         string
-	KMSKeyName           string
-	RunnerServiceAccount string
-	PrepImage            string
-	PromptImage          string
-
 	Secrets                 *secrets.S
 	WebhookSecretName       string
 	AppPrivateKeySecretName string
@@ -29,7 +23,6 @@ type Config struct {
 	SubBuildServiceAccount   string
 	SubBuildLogsBucket       string
 	SubBuildTestOutputBucket string
-	SubBuildGoRepository     string
 
 	// Optional
 	Transport   http.RoundTripper
@@ -45,21 +38,6 @@ func (c Config) validate() error {
 	}
 	if c.AppID == 0 {
 		return fmt.Errorf("AppID must be set")
-	}
-	if c.PromptBucket == "" {
-		return fmt.Errorf("PromptBucket must be set")
-	}
-	if c.KMSKeyName == "" {
-		return fmt.Errorf("KMSKeyName must be set")
-	}
-	if c.RunnerServiceAccount == "" {
-		return fmt.Errorf("RunnerServiceAccount must be set")
-	}
-	if c.PrepImage == "" {
-		return fmt.Errorf("PrepImage must be set")
-	}
-	if c.PromptImage == "" {
-		return fmt.Errorf("PromptImage must be set")
 	}
 	if c.Secrets == nil {
 		return fmt.Errorf("Secrets must be set")
@@ -81,9 +59,6 @@ func (c Config) validate() error {
 	}
 	if c.SubBuildTestOutputBucket == "" {
 		return fmt.Errorf("SubBuildTestOutputBucket must be set")
-	}
-	if c.SubBuildGoRepository == "" {
-		return fmt.Errorf("SubBuildGoRepository must be set")
 	}
 	return nil
 }

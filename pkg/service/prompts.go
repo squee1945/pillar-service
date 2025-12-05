@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"text/template"
+	"time"
 
 	"github.com/google/go-github/v75/github"
 )
@@ -71,7 +72,6 @@ type promptIssueCommentCreatedPopulatePR struct {
 	region           string
 	commit           string
 	testOutputBucket string
-	goRepository     string
 	event            *github.IssueCommentEvent
 }
 
@@ -89,15 +89,15 @@ func (p *promptIssueCommentCreatedPopulatePR) Data(context.Context) (any, error)
 		Region           string
 		Commit           string
 		TestOutputBucket string
-		GoRepository     string
 		PullRequestJSON  string
+		NowNano          string
 	}{
 		ProjectID:        p.projectID,
 		Region:           p.region,
 		Commit:           p.commit,
 		TestOutputBucket: p.testOutputBucket,
-		GoRepository:     p.goRepository,
 		PullRequestJSON:  js,
+		NowNano:          fmt.Sprintf("%d", time.Now().UnixNano()),
 	}, nil
 }
 
